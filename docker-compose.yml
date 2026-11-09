@@ -1,0 +1,92 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        DEPLOY_ID: ${DEPLOY_ID:-dev}
+    restart: unless-stopped
+    # Values come from /opt/huizen/.env; each service only gets what it needs
+    environment:
+      DATABASE_URL: postgres://huizen:${POSTGRES_PASSWORD}@db:5432/huizen
+      APP_URL: ${APP_URL}
+      APP_NAME: ${APP_NAME:-}
+      APP_TITLE: ${APP_TITLE:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      FUNDA_SERVICE_URL: http://funda:8000
+      MAIL_ADDRESS: ${MAIL_ADDRESS:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      funda:
+        condition: service_started
+
+  # Fetches Funda listings via pyfunda; only reachable from the app (see funda-service/server.py)
+  funda:
+    build: ./funda-service
+    restart: unless-stopped
+
+  # Suggestions agent: Claude Code on the Claude Pro subscription (see agent/worker.mjs)
+  agent:
+    build: ./agent
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://huizen:${POSTGRES_PASSWORD}@db:5432/huizen
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      FUNDA_SERVICE_URL: http://funda:8000
+      # Only for the User-Agent of the makelaar crawler
+      APP_NAME: ${APP_NAME:-}
+      APP_URL: ${APP_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Receive-only mail for MAIL_ADDRESS: search alerts (Funda, Pararius, Huislijn) forwarded from Gmail (see mail/server.mjs)
+  mail:
+    build: ./mail
+    restart: unless-stopped
+    ports:
+      - "25:2525"
+    environment:
+      DATABASE_URL: postgres://huizen:${POSTGRES_PASSWORD}@db:5432/huizen
+      MAIL_ADDRESS: ${MAIL_ADDRESS:-}
+      MAIL_HOSTNAME: ${SITE_ADDRESS}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: huizen
+      POSTGRES_DB: huizen
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "huizen"]
+      interval: 5s
+      retries: 10
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+      REDIRECT_ADDRESSES: ${REDIRECT_ADDRESSES}
+      APP_URL: ${APP_URL}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

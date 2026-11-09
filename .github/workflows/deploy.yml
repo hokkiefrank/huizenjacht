@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # A fresh fork has no server yet: skip (green) until the secrets from the README are set
+    env:
+      HAS_SERVER: ${{ secrets.DEPLOY_HOST != '' }}
+    steps:
+      - name: No server configured
+        if: env.HAS_SERVER != 'true'
+        run: echo "DEPLOY_HOST is not set; skipping the deploy (see README → Automatic deploys)."
+      - name: Build and restart on the server
+        if: env.HAS_SERVER == 'true'
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          command_timeout: 20m
+          script: |
+            set -e
+            cd /opt/huizen
+            git fetch --quiet origin main
+            git reset --hard origin/main
+            DEPLOY_ID=$(git rev-parse --short HEAD) docker compose up -d --build --remove-orphans
+            docker image prune -f
+            # Every deploy adds build layers; keep enough cache for fast builds, drop the rest
+            docker builder prune -f --max-used-space 3GB

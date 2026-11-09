@@ -1,0 +1,1 @@
+ALTER TYPE "public"."suggestion_status" ADD VALUE 'niet_beschikbaar';

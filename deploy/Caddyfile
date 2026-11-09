@@ -1,0 +1,9 @@
+{$SITE_ADDRESS} {
+	encode zstd gzip
+	reverse_proxy app:3000
+}
+
+# Old and alternative addresses (e.g. www, the sslip.io address) send visitors to the main one
+{$REDIRECT_ADDRESSES} {
+	redir {$APP_URL}{uri} permanent
+}

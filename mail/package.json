@@ -1,0 +1,10 @@
+{
+  "name": "huizen-mail",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "mailparser": "3.9.32",
+    "postgres": "3.4.9",
+    "smtp-server": "3.19.16"
+  }
+}

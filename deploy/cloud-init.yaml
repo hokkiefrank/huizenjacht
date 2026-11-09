@@ -1,0 +1,37 @@
+#cloud-config
+# First-boot setup for an Ubuntu 24.04 server (see README → Production → 1. Server).
+# Replace the SSH key below with your own public key (cat ~/.ssh/id_ed25519.pub).
+package_update: true
+package_upgrade: true
+packages:
+  - ca-certificates
+  - curl
+  - git
+  - fail2ban
+  - unattended-upgrades
+users:
+  # Everything runs as this user; root can't log in over SSH
+  - name: deploy
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAA...replace-with-your-public-key you@laptop
+write_files:
+  # Keys only: no passwords, no root
+  - path: /etc/ssh/sshd_config.d/99-hardening.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+  # Security updates install themselves every day
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+runcmd:
+  - curl -fsSL https://get.docker.com | sh
+  - usermod -aG docker deploy
+  - systemctl enable --now docker fail2ban
+  - mkdir -p /opt/huizen && chown deploy:deploy /opt/huizen
+  - systemctl restart ssh

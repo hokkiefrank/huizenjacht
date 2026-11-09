@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+
+  /* Dark chocolate accent */
+  --color-accent: #5c3a24;
+  --color-accent-hover: #432817;
+  --color-accent-soft: #f1e6db;
+  /* The same roles on a dark background */
+  --color-accent-night: #8a5a3a;
+  --color-accent-night-hover: #a06c48;
+  --color-accent-night-soft: #3a291e;
+  --color-accent-night-text: #dcbb9b;
+
+  /* Tailwind's stone greys, warmed to cocoa and latte tones, so every neutral in the app follows the theme */
+  --color-stone-50: #faf6f2;
+  --color-stone-100: #f3ece5;
+  --color-stone-200: #e6dbd0;
+  --color-stone-300: #d3c2b3;
+  --color-stone-400: #a8917f;
+  --color-stone-500: #7f6757;
+  --color-stone-600: #624d40;
+  --color-stone-700: #4a3a30;
+  --color-stone-800: #33271f;
+  --color-stone-900: #241b16;
+  --color-stone-950: #17110d;
+}
+
+@layer base {
+  body {
+    @apply bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100;
+  }
+  input,
+  textarea,
+  select {
+    @apply rounded-lg border border-stone-300 bg-white px-3 py-2 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 dark:border-stone-700 dark:focus:border-accent-night-text dark:focus:ring-accent-night-text/20 dark:bg-stone-900;
+  }
+  label {
+    @apply text-sm font-medium text-stone-600 dark:text-stone-400;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 font-medium text-white transition hover:bg-accent-hover disabled:opacity-50 dark:bg-accent-night dark:hover:bg-accent-night-hover;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-stone-300 px-4 py-2 font-medium transition hover:bg-stone-100 dark:border-stone-700 dark:hover:bg-stone-800;
+  }
+  .card {
+    @apply rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900;
+  }
+}

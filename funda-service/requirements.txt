@@ -1,0 +1,8 @@
+# Pinned: pyfunda breaks with tls-client 2.x
+pyfunda==3.1.5
+tls-client==1.0.1
+curl_cffi==0.16.3
+certifi==2026.10.19
+cffi==2.1.1
+pycparser==3.11
+typing_extensions==4.16.0
